@@ -1,6 +1,5 @@
 import React, {useRef, useState} from 'react';
 import {
-  Dimensions,
   FlatList,
   Image,
   NativeScrollEvent,
@@ -165,6 +164,3 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 });
-
-// Keep FlatList item sizing stable
-Dimensions.get('window');

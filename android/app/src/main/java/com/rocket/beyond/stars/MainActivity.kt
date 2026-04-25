@@ -1,4 +1,4 @@
-package com.rocketbeyondstars
+package com.rocket.beyond.stars
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

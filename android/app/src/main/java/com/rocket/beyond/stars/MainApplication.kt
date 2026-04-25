@@ -1,4 +1,4 @@
-package com.rocketbeyondstars
+package com.rocket.beyond.stars
 
 import android.app.Application
 import com.facebook.react.PackageList
