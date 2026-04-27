@@ -1,7 +1,6 @@
 import React, {useRef, useState} from 'react';
 import {
   Image,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,8 +25,6 @@ type Nav = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
-const IS_IOS = Platform.OS === 'ios';
-
 const INITIAL_REGION: Region = {
   latitude: 20,
   longitude: 0,
@@ -37,9 +34,6 @@ const INITIAL_REGION: Region = {
 
 const {height: SCREEN_H} = Dimensions.get('window');
 const MAP_HEIGHT = Math.max(320, Math.round(SCREEN_H * 0.55));
-
-const projectLat = (lat: number) => ((90 - lat) / 180) * 0.7 + 0.12;
-const projectLng = (lng: number) => (lng + 180) / 360;
 
 export const MapScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
@@ -52,9 +46,7 @@ export const MapScreen: React.FC = () => {
 
   const animateTo = (next: Region) => {
     regionRef.current = next;
-    if (IS_IOS) {
-      mapRef.current?.animateToRegion(next, 300);
-    }
+    mapRef.current?.animateToRegion(next, 300);
   };
 
   const pickRandom = () => {
@@ -98,120 +90,66 @@ export const MapScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
         <View style={[styles.mapWrap, {height: MAP_HEIGHT}]}>
-          {IS_IOS ? (
-            <MapView
-              ref={mapRef}
-              style={StyleSheet.absoluteFillObject}
-              initialRegion={INITIAL_REGION}
-              onRegionChangeComplete={region => {
-                regionRef.current = region;
-              }}
-              showsPointsOfInterest={false}
-              showsBuildings={false}
-              showsTraffic={false}
-              mapType="mutedStandard">
-              {locations.map(loc => (
-                <Marker
-                  key={loc.id}
-                  coordinate={{
-                    latitude: loc.latitude,
-                    longitude: loc.longitude,
-                  }}
-                  onPress={() => setSelectedId(loc.id)}>
-                  <View
-                    style={[
-                      styles.markerWrap,
-                      selectedId === loc.id && styles.markerWrapActive,
-                    ]}>
-                    <Text style={styles.markerEmoji}>{loc.emoji}</Text>
-                  </View>
-                </Marker>
-              ))}
-            </MapView>
-          ) : (
-            <View style={styles.flatMapBg}>
-              {Array.from({length: 6}).map((_, i) => (
+          <MapView
+            ref={mapRef}
+            style={StyleSheet.absoluteFillObject}
+            initialRegion={INITIAL_REGION}
+            onRegionChangeComplete={region => {
+              regionRef.current = region;
+            }}
+            showsPointsOfInterest={false}
+            showsBuildings={false}
+            showsTraffic={false}
+            loadingEnabled
+            mapType="standard">
+            {locations.map(loc => (
+              <Marker
+                key={loc.id}
+                coordinate={{
+                  latitude: loc.latitude,
+                  longitude: loc.longitude,
+                }}
+                onPress={() => setSelectedId(loc.id)}>
                 <View
-                  key={`h-${i}`}
                   style={[
-                    styles.gridLineH,
-                    {top: `${((i + 1) * 100) / 7}%`},
-                  ]}
-                />
-              ))}
-              {Array.from({length: 9}).map((_, i) => (
-                <View
-                  key={`v-${i}`}
-                  style={[
-                    styles.gridLineV,
-                    {left: `${((i + 1) * 100) / 10}%`},
-                  ]}
-                />
-              ))}
-              {locations.map(loc => {
-                const left = projectLng(loc.longitude) * 100;
-                const top = projectLat(loc.latitude) * 100;
-                const isActive = selectedId === loc.id;
-                return (
-                  <Pressable
-                    key={loc.id}
-                    onPress={() => setSelectedId(loc.id)}
-                    hitSlop={8}
-                    style={[
-                      styles.flatPin,
-                      {left: `${left}%`, top: `${top}%`},
-                      isActive && styles.flatPinActive,
-                    ]}>
-                    <Text style={styles.markerEmoji}>{loc.emoji}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
+                    styles.markerWrap,
+                    selectedId === loc.id && styles.markerWrapActive,
+                  ]}>
+                  <Text style={styles.markerEmoji}>{loc.emoji}</Text>
+                </View>
+              </Marker>
+            ))}
+          </MapView>
 
-          {IS_IOS ? (
-            <View style={styles.controls} pointerEvents="box-none">
-              <Pressable
-                onPress={zoomIn}
-                hitSlop={8}
-                style={({pressed}) => [
-                  styles.controlBtn,
-                  pressed && styles.controlBtnPressed,
-                ]}>
-                <Text style={styles.controlIcon}>＋</Text>
-              </Pressable>
-              <Pressable
-                onPress={zoomOut}
-                hitSlop={8}
-                style={({pressed}) => [
-                  styles.controlBtn,
-                  pressed && styles.controlBtnPressed,
-                ]}>
-                <Text style={styles.controlIcon}>−</Text>
-              </Pressable>
-              <Pressable
-                onPress={resetView}
-                hitSlop={8}
-                style={({pressed}) => [
-                  styles.controlBtn,
-                  pressed && styles.controlBtnPressed,
-                ]}>
-                <Text style={styles.controlIconSmall}>🧭</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.controls} pointerEvents="box-none">
-              <Pressable
-                onPress={resetView}
-                hitSlop={8}
-                style={({pressed}) => [
-                  styles.controlBtn,
-                  pressed && styles.controlBtnPressed,
-                ]}>
-                <Text style={styles.controlIconSmall}>🧭</Text>
-              </Pressable>
-            </View>
-          )}
+          <View style={styles.controls} pointerEvents="box-none">
+            <Pressable
+              onPress={zoomIn}
+              hitSlop={8}
+              style={({pressed}) => [
+                styles.controlBtn,
+                pressed && styles.controlBtnPressed,
+              ]}>
+              <Text style={styles.controlIcon}>＋</Text>
+            </Pressable>
+            <Pressable
+              onPress={zoomOut}
+              hitSlop={8}
+              style={({pressed}) => [
+                styles.controlBtn,
+                pressed && styles.controlBtnPressed,
+              ]}>
+              <Text style={styles.controlIcon}>−</Text>
+            </Pressable>
+            <Pressable
+              onPress={resetView}
+              hitSlop={8}
+              style={({pressed}) => [
+                styles.controlBtn,
+                pressed && styles.controlBtnPressed,
+              ]}>
+              <Text style={styles.controlIconSmall}>🧭</Text>
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.randomRow}>
@@ -282,49 +220,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
     backgroundColor: palette.surfaceSoft,
-  },
-  flatMapBg: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#0E1230',
-    overflow: 'hidden',
-  },
-  gridLineH: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(160, 180, 240, 0.08)',
-  },
-  gridLineV: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(160, 180, 240, 0.08)',
-  },
-  flatPin: {
-    position: 'absolute',
-    width: 32,
-    height: 32,
-    marginLeft: -16,
-    marginTop: -16,
-    borderRadius: 16,
-    backgroundColor: palette.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: palette.backgroundDeep,
-  },
-  flatPinActive: {
-    width: 40,
-    height: 40,
-    marginLeft: -20,
-    marginTop: -20,
-    shadowColor: palette.accent,
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
-    shadowOffset: {width: 0, height: 0},
-    elevation: 10,
   },
   markerWrap: {
     width: 30,
