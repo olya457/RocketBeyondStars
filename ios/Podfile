@@ -8,6 +8,34 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
+def patch_fmt_consteval_for_xcode_26(installer)
+  fmt_base = File.join(installer.sandbox.pod_dir('fmt'), 'include', 'fmt', 'base.h')
+  return unless File.exist?(fmt_base)
+
+  contents = File.read(fmt_base)
+  # Xcode 26.4 rejects fmt 11.0.2's consteval format-string checks.
+  patched = contents.gsub(/^(\s*#\s*define\s+FMT_USE_CONSTEVAL\s+)1(\s*)$/) do
+    "#{$1}0#{$2}"
+  end
+  return if patched == contents
+
+  File.chmod(0644, fmt_base)
+  File.write(fmt_base, patched)
+  Pod::UI.puts 'Patched fmt: disabled FMT_USE_CONSTEVAL for Xcode 26.4 compatibility'.green
+end
+
+def remove_yoga_werror(installer)
+  yoga_target = installer.pods_project.targets.find { |target| target.name == 'Yoga' }
+  return unless yoga_target
+
+  yoga_target.source_build_phase.files.each do |build_file|
+    flags = build_file.settings && build_file.settings['COMPILER_FLAGS']
+    next unless flags&.split&.include?('-Werror')
+
+    build_file.settings['COMPILER_FLAGS'] = flags.split.reject { |flag| flag == '-Werror' }.join(' ')
+  end
+end
+
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
@@ -31,5 +59,8 @@ target 'RocketBeyondStars' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    patch_fmt_consteval_for_xcode_26(installer)
+    remove_yoga_werror(installer)
   end
 end
